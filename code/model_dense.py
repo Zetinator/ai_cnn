@@ -32,30 +32,34 @@ class CNN(object):
 
 
         # reference
-        xin = Conv2D(filters=16, kernel_size=5, padding='same')(input)
+        xin = Conv2D(filters=16, 
+                        strides=4, 
+                        kernel_size=4, 
+                        activation='relu', 
+                        padding='same')(input)
+        xin = BatchNormalization()(xin)
 
 
         # skip layer tensor
         skip = Conv2D(filters=1,
-                       kernel_size=5,
-                       padding='same',
-                       dilation_rate=2)(input)
+                        strides=4, 
+                        kernel_size=4,
+                        padding='same',
+                        activation='relu', 
+                        dilation_rate=2)(input)
+        skip = BatchNormalization()(skip)
 
-
-        # image reduced by 8
-        x8 = MaxPooling2D(8)(xin)
-        x8 = BatchNormalization()(x8)
-        x8 = Activation('relu', name='contract')(x8)
 
 
         # parallel stage
         dilation_rate = 1
-        y = x8
+        y = xin
         for i in range(4):
             a = Conv2D(filters=32,
-                       kernel_size=5,
-                       padding='same',
-                       dilation_rate=dilation_rate)(x8)
+                        kernel_size=5,
+                        padding='same',
+                        activation='relu', 
+                        dilation_rate=dilation_rate)(xin)
             a = Dropout(dropout)(a)
             y = keras.layers.concatenate([a, y])
             dilation_rate += 1
@@ -64,37 +68,41 @@ class CNN(object):
         # disparity network
         # dense interconnection inspired by DenseNet
         dilation_rate = 1
-        x = MaxPooling2D(8)(xin)
+        x = skip
         for i in range(4):
             x = keras.layers.concatenate([x, y])
-            y = BatchNormalization()(x)
-            y = Activation('relu')(y)
             y = Conv2D(filters=64,
-                       kernel_size=1,
-                       padding='same')(y)
+                        activation='relu', 
+                        kernel_size=1,
+                        padding='same')(y)
             y = BatchNormalization()(y)
-            y = Activation('relu')(y)
             y = Conv2D(filters=16,
-                       kernel_size=5,
-                       padding='same',
-                       dilation_rate=dilation_rate)(y)
+                        activation='relu', 
+                        kernel_size=5,
+                        padding='same',
+                        dilation_rate=dilation_rate)(y)
+            y = BatchNormalization()(x)
             y = Dropout(dropout)(y)
             dilation_rate += 1
 
 
         # input image skip connection to disparity estimate
-        x = keras.layers.concatenate([x, skip])
+        x = keras.layers.concatenate([y, skip])
+        y = Conv2D(filters=16, 
+                        activation='relu', 
+                        kernel_size=5, 
+                        padding='same')(y)
         y = BatchNormalization()(x)
-        y = Activation('relu')(y)
-        y = Conv2D(filters=16, kernel_size=5, padding='same')(y)
 
         
         # output
-        output = Dense(9, activation='linear',
-                     use_bias=True,
-                     bias_initializer='zeros')(y)
+        output = Dense(1, 
+                        activation='linear',
+                        use_bias=True,
+                        bias_initializer='zeros')(y)
+
         # CNN model
-        self.model = Model(input,output)
+        self.model = Model(image_input,output)
         if self.settings.model_weights:
             print("Loading checkpoint weights %s...."
                   % self.settings.model_weights)
