@@ -40,11 +40,10 @@ class DataLoader(object):
     def get_all (self):
         test = self.normalize(self.images[:,:,:])
 
-        return self.nomalize(test)
+        return self.normalize(test)
 
-    def nomalize (self, data):
-        # normalize data between 0 and 1
+    def normalize (self, data):
+        # normalize and reshape data between 0 and 1
         data = (data/data.max()).astype('uint8')
 
         return data
-

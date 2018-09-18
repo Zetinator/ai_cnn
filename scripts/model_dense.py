@@ -14,7 +14,7 @@ from keras.layers.pooling import MaxPooling2D
 from keras.utils import plot_model
 
 import numpy as np
-from utils import Settings
+# from utils import Settings
 
 
 class CNN(object):
@@ -95,7 +95,7 @@ class CNN(object):
 
         
         # output
-        output = Dense(1, 
+        output = Dense(9, 
                         activation='linear',
                         use_bias=True,
                         bias_initializer='zeros')(y)
@@ -112,5 +112,5 @@ class CNN(object):
                            optimizer=RMSprop(lr=lr))
         print("CNN Model:")
         self.model.summary()
-        plot_model(self.model, to_file='densemapnet.png', show_shapes=True)
+        plot_model(self.model, to_file='CNN.png', show_shapes=True)
         return self.model
