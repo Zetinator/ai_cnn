@@ -21,27 +21,30 @@ from utils import DataLoader
 from model_dense import CNN
 
 
-class Predictor(object):
+class Interface(object):
     def __init__(self, settings=Settings()):
         # some variables
         self.settings = settings
-        self.dataset = settings.dataset
+        self.dataset = os.path.join('dataset', settings.dataset)
         self.image_data = None
-        self.outputs_data = None
+        self.labels_data = None
         self.network = None
+        self.model = None
 
         # action time
-        self.mkdir_outputs()
+        self.mkdir_labels()
         self.load_data()
-        self.get_max_disparity()
 
-    def load_data():
+    def load_data(self):
         loader = DataLoader(self.dataset)
         print('Loading data... ')
         loader.load_images()
         self.image_data = loader.get_all()
-        loader.load_outputs()
-        self.outputs_data = loader.get_outputs()
+        self.settings.ydim = self.image_data.shape[1]
+        self.settings.xdim = self.image_data.shape[2]
+        self.settings.channels = self.image_data.shape[3]
+        loader.load_labels()
+        self.labels_data = loader.get_labels()
         print('                     --> SUCCESS')
 
     def train_network(self, epochs=1000, lr=1e-3):
@@ -73,31 +76,35 @@ class Predictor(object):
             self.model.compile(loss='binary_crossentropy',
                                optimizer=RMSprop(lr=lr, decay=1e-6))
 
-        x = [self.train_lx, self.train_rx]
         self.model.fit(self.image_data,
-                       self.outputs_data,
+                       self.labels_data,
                        epochs=epochs,
                        batch_size=4,
                        shuffle=True,
                        callbacks=callbacks)
 
-    def mkdir_outputs(self):
+    def mkdir_labels(self):
         dirname = 'outputs'
 
         filepath = os.path.join(self.dataset, dirname)
         os.makedirs(filepath, exist_ok=True)
 
     def predict(self, image):
-        input_image = image
+        if self.model:
+            input_image = image
 
-        print("Saving images on folder...")
-        start_time = time.time()
-        prediction = self.model.predict(input_image)
-        elapsed_time += (time.time() - start_time)
-        print("Prediction --> ", str(prediction))
-        print("                             Elapsed time --> ", elapsed_time)
+            print("Saving images on folder...")
+            start_time = time.time()
+            prediction = self.model.predict(input_image)
+            elapsed_time += (time.time() - start_time)
+            print("Prediction --> ", str(prediction))
+            print("                             Elapsed time --> ", elapsed_time)
 
-        return prediction
+            return prediction
+        else:
+            print('No model found...')
+
+            return prediction
 
 
 if __name__ == '__main__':
@@ -121,8 +128,12 @@ if __name__ == '__main__':
     settings.dataset = args.dataset
     settings.predict = args.predict
 
-    predictor = Predictor(settings=settings)
-    if settings.predict and settings.model_weights:
-        predictor.predict()
+    predictor = Interface(settings=settings)
+    if settings.predict:
+        if settings.model_weights:
+            predictor.predict()
+        else:
+            print('Load the weights first...')
+
     else:
         predictor.train_network()
