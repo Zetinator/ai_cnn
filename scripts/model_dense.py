@@ -3,7 +3,7 @@ from __future__ import division
 from __future__ import print_function
 
 import keras
-from keras.layers import Dense, Dropout
+from keras.layers import Dense, Dropout, Flatten
 from keras.layers import Input, Conv2D, Conv2DTranspose
 from keras.layers import ZeroPadding2D, BatchNormalization, Activation
 from keras.layers import UpSampling2D
@@ -53,7 +53,7 @@ class CNN(object):
         # parallel stage
         dilation_rate = 1
         y = xin
-        for i in range(4):
+        for i in range(5):
             a = Conv2D(filters=32,
                         kernel_size=5,
                         padding='same',
@@ -68,9 +68,9 @@ class CNN(object):
         # dense interconnection inspired by DenseNet
         dilation_rate = 1
         x = skip
-        for i in range(4):
+        for i in range(3):
             x = keras.layers.concatenate([x, y])
-            y = Conv2D(filters=64,
+            y = Conv2D(filters=32,
                         activation='relu', 
                         kernel_size=1,
                         padding='same')(y)
@@ -87,15 +87,17 @@ class CNN(object):
 
         # input image skip connection to disparity estimate
         x = keras.layers.concatenate([y, skip])
-        y = Conv2D(filters=16, 
+        y = Conv2D(filters=1, 
                         activation='relu', 
                         kernel_size=5, 
-                        padding='same')(y)
-        y = BatchNormalization()(x)
-
+                        padding='same')(x)
+        y = BatchNormalization()(y)
         
+        # flatten
+        y = Flatten()(y)
+
         # output
-        output = Dense(9, 
+        output = Dense(1, 
                         activation='linear',
                         use_bias=True,
                         bias_initializer='zeros')(y)
