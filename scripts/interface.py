@@ -17,8 +17,8 @@ import matplotlib.pyplot as plt
 from scipy import misc
 
 from utils import Settings
-from utils import ElapsedTimer
-from densemapnet import DenseMapNet
+from utils import DataLoader
+from model_dense import CNN
 
 
 class Predictor(object):
@@ -31,29 +31,6 @@ class Predictor(object):
         self.load_mask()
         self.network  = None
         self.train_data_loaded = False
-        if self.settings.epe:
-            self.best_epe = self.settings.epe
-        else:
-            self.best_epe = 100.0
-
-    def load_mask(self):
-        if self.settings.mask:
-            if self.settings.predict:
-                filename = self.settings.dataset + "_complete.test.mask.npz"
-                print("Loading... ", filename)
-                self.test_mx = np.load(os.path.join(self.pdir, filename))['arr_0']
-            else:
-                filename = self.settings.dataset + ".test.mask.npz"
-                print("Loading... ", filename)
-                self.test_mx = np.load(os.path.join(self.pdir, filename))['arr_0']
-                filename = self.settings.dataset + ".train.mask.1.npz"
-                print("Loading... ", filename)
-                self.train_mx = np.load(os.path.join(self.pdir, filename))['arr_0']
-                shape = [-1, self.train_mx.shape[1], self.train_mx.shape[2], 1]
-                self.train_mx = np.reshape(self.train_mx, shape)
-
-            shape = [-1, self.test_mx.shape[1], self.test_mx.shape[2], 1]
-            self.test_mx = np.reshape(self.test_mx, shape)
 
     def load_test_disparity(self):
         filename = self.settings.dataset + ".test.disparity.npz"
@@ -455,60 +432,24 @@ if __name__ == '__main__':
     parser.add_argument("-d",
                         "--dataset",
                         help="Name of dataset to load")
-    parser.add_argument("-n",
-                        "--num_dataset",
-                        type=int,
-                        help="Number of dataset file splits to load")
     help_ = "No training. Just prediction based on test data. Must load weights."
     parser.add_argument("-p",
                         "--predict",
                         action='store_true',
                         help=help_)
-    help_ = "Generate images during prediction. Images are stored images/"
-    parser.add_argument("-i",
-                        "--images",
-                        action='store_true',
-                        help=help_)
-    help_ = "No training. EPE benchmarking on test set. Must load weights."
+    help_ = "Generate outputs during prediction. Outputs are stored outputs/"
     parser.add_argument("-t",
-                        "--notrain",
+                        "--test",
                         action='store_true',
                         help=help_)
-    help_ = "Use hyperbolic tan in the output layer"
-    parser.add_argument("-o",
-                        "--otanh",
-                        action='store_true',
-                        help=help_)
-    help_ = "Best EPE"
-    parser.add_argument("-e",
-                        "--epe",
-                        type=float,
-                        help=help_)
-    help_ = "No padding"
-    parser.add_argument("-a",
-                        "--nopadding",
-                        action='store_true',
-                        help=help_)
-    help_ = "Mask images for sparse data"
-    parser.add_argument("-m",
-                        "--mask",
-                        action='store_true',
-                        help=help_)
-
 
 
     args = parser.parse_args()
     settings = Settings()
     settings.model_weights = args.weights
     settings.dataset = args.dataset
-    settings.num_dataset = args.num_dataset
     settings.predict = args.predict
-    settings.images = args.images
-    settings.notrain = args.notrain
-    settings.otanh = args.otanh
-    settings.epe = args.epe
-    settings.nopadding = args.nopadding
-    settings.mask = args.mask
+    settings.test = args.test
 
     predictor = Predictor(settings=settings)
     if settings.predict:

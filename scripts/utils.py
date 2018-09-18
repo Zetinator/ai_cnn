@@ -10,7 +10,7 @@ class Settings(object):
         self.channels = 1
         self.model_weights = None
 
-class data_loader(object):
+class DataLoader(object):
     def __init__(self, dataset_path):
         self.dataset_path = dataset_path
         self.images = None
