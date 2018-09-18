@@ -3,7 +3,7 @@ from __future__ import division
 from __future__ import print_function
 
 import keras
-from keras.callbacks import ModelCheckpoint, LambdaCallback
+from keras.callbacks import ModelCheckpoint, LambdaCallback, TensorBoard
 from keras.optimizers import RMSprop, SGD
 
 import numpy as np
@@ -23,120 +23,26 @@ from model_dense import CNN
 
 class Predictor(object):
     def __init__(self, settings=Settings()):
+        # some variables
         self.settings = settings
-        self.mkdir_images()
-        self.pdir = "dataset"
+        self.dataset = settings.dataset
+        self.image_data = None
+        self.outputs_data = None
+        self.network = None
+
+        # action time
+        self.mkdir_outputs()
+        self.load_data()
         self.get_max_disparity()
-        self.load_test_data()
-        self.load_mask()
-        self.network  = None
-        self.train_data_loaded = False
 
-    def load_test_disparity(self):
-        filename = self.settings.dataset + ".test.disparity.npz"
-        print("Loading... ", filename)
-        self.test_dx = np.load(os.path.join(self.pdir, filename))['arr_0']
-        self.dmax =  max(self.dmax, np.amax(self.test_dx))
-        self.dmin =  min(self.dmin, np.amin(self.test_dx))
-        self.sum += np.sum(self.test_dx, axis=0)
-        self.size += self.test_dx.shape[0]
-        print("Max disparity on entire dataset: ", self.dmax)
-        print("Min disparity on entire dataset: ", self.dmin)
-        if self.settings.predict:
-            filename = self.settings.dataset + "_complete.test.disparity.npz"
-            print("Loading... ", filename)
-            self.test_dx = np.load(os.path.join(self.pdir, filename))['arr_0']
-
-        dim = self.test_dx.shape[1] * self.test_dx.shape[2]
-        self.ave = np.sum(self.sum / self.size) / dim
-        print("Ave disparity: ", self.ave)
-        if self.settings.otanh:
-            self.dmax *= 0.5
-            print("Max disparity for tanh: ", self.dmax)
-            self.test_dx = self.test_dx.astype('float32') - self.dmax
-            self.test_dx = self.test_dx.astype('float32') / self.dmax
-            print("Scaled disparity max: ", np.amax(self.test_dx))
-            print("Scaled disparity min: ", np.amin(self.test_dx))
-            # self.test_dx =  np.clip(self.test_dx, -1.0, 1.0)
-        else:
-            self.test_dx = self.test_dx.astype('float32') / self.dmax
-            print("Scaled disparity max: ", np.amax(self.test_dx))
-            print("Scaled disparity min: ", np.amin(self.test_dx))
-            # self.test_dx =  np.clip(self.test_dx, 0.0, 1.0)
-
-        shape = [-1, self.test_dx.shape[1], self.test_dx.shape[2], 1]
-        self.test_dx = np.reshape(self.test_dx, shape)
-
-    def get_max_disparity(self):
-        self.dmax = 0
-        self.dmin = 255
-        self.sum = None
-        self.size = 0
-        count = self.settings.num_dataset + 1
-        for i in range(1, count, 1):
-            filename = self.settings.dataset + ".train.disparity.%d.npz" % i
-            print("Loading... ", filename)
-            self.train_dx = np.load(os.path.join(self.pdir, filename))['arr_0']
-            self.dmax =  max(self.dmax, np.amax(self.train_dx))
-            self.dmin =  min(self.dmin, np.amin(self.train_dx))
-            if self.sum is None:
-                self.sum = np.sum(self.train_dx, axis=0)
-            else:
-                self.sum += np.sum(self.train_dx, axis=0)
-            self.size += self.train_dx.shape[0]
-        self.load_test_disparity()
-
-    def load_test_data(self):
-        if self.settings.predict:
-            filename = self.settings.dataset + "_complete.test.left.npz"
-            print("Loading... ", filename)
-            self.test_lx = np.load(os.path.join(self.pdir, filename))['arr_0']
-            filename = self.settings.dataset + "_complete.test.right.npz"
-            print("Loading... ", filename)
-            self.test_rx = np.load(os.path.join(self.pdir, filename))['arr_0']
-        else:
-            filename = self.settings.dataset + ".test.left.npz"
-            print("Loading... ", filename)
-            self.test_lx = np.load(os.path.join(self.pdir, filename))['arr_0']
-            filename = self.settings.dataset + ".test.right.npz"
-            print("Loading... ", filename)
-            self.test_rx = np.load(os.path.join(self.pdir, filename))['arr_0']
-        # self.channels = self.settings.channels
-        self.channels = self.settings.channels = self.test_lx.shape[3]
-        self.xdim = self.settings.xdim = self.test_lx.shape[2]
-        self.ydim = self.settings.ydim = self.test_lx.shape[1]
-
-    def load_train_data(self, index):
-        filename = self.settings.dataset + ".train.left.%d.npz" % index
-        print("Loading... ", filename)
-        self.train_lx = np.load(os.path.join(self.pdir, filename))['arr_0']
-
-        filename = self.settings.dataset + ".train.right.%d.npz" % index
-        print("Loading... ", filename)
-        self.train_rx = np.load(os.path.join(self.pdir, filename))['arr_0']
-
-        filename = self.settings.dataset + ".train.disparity.%d.npz" % index
-        print("Loading... ", filename)
-        self.train_dx = np.load(os.path.join(self.pdir, filename))['arr_0']
-
-        if self.settings.otanh:
-            self.train_dx = self.train_dx.astype('float32') - self.dmax
-            self.train_dx = self.train_dx.astype('float32') / self.dmax
-            print("Scaled disparity max: ", np.amax(self.train_dx))
-            print("Scaled disparity min: ", np.amin(self.train_dx))
-            # self.train_dx = np.clip(self.train_dx, -1.0, 1.0)
-        else:
-            self.train_dx = self.train_dx.astype('float32') / self.dmax
-            print("Scaled disparity max: ", np.amax(self.train_dx))
-            print("Scaled disparity min: ", np.amin(self.train_dx))
-            # self.train_dx = np.clip(self.train_dx, 0.0, 1.0)
-        shape =  [-1, self.train_dx.shape[1], self.train_dx.shape[2], 1]
-        self.train_dx = np.reshape(self.train_dx, shape)
-
-        self.channels = self.settings.channels = self.train_lx.shape[3]
-        self.xdim = self.settings.xdim = self.train_lx.shape[2]
-        self.ydim = self.settings.ydim = self.train_lx.shape[1]
-        self.train_data_loaded = True
+    def load_data():
+        loader = DataLoader(self.dataset)
+        print('Loading data... ')
+        loader.load_images()
+        self.image_data = loader.get_all()
+        loader.load_outputs()
+        self.outputs_data = loader.get_outputs()
+        print('                     --> SUCCESS')
 
     def train_network(self):
         if self.settings.num_dataset == 1:
@@ -176,7 +82,9 @@ class Predictor(object):
                                      save_best_only=False)
         predict_callback = LambdaCallback(on_epoch_end=lambda epoch,
                                           logs: self.predict_disparity())
-        callbacks = [checkpoint, predict_callback]
+        tb = TensorBoard(log_dir='./Graph', histogram_freq=0,
+          write_graph=True, write_images=True)
+        callbacks = [checkpoint, predict_callback, tb]
         self.load_train_data(1)
         if self.network is None:
             self.network = DenseMapNet(settings=self.settings)
@@ -204,75 +112,11 @@ class Predictor(object):
                        shuffle=True,
                        callbacks=callbacks)
 
-    def train_batch(self, epochs=1, lr=1e-3, seq=1):
-        count = self.settings.num_dataset + 1
-        checkdir = "checkpoint"
-        try:
-            os.mkdir(checkdir)
-        except FileExistsError:
-            print("Folder exists: ", checkdir)
+    def mkdir_outputs(self):
+        dirname = 'outputs'
 
-        is_model_compiled = False
-
-        indexes = np.arange(1,count)
-        np.random.shuffle(indexes)
-
-        # for i in range(1, count, 1):
-        for i in indexes:
-            filename = self.settings.dataset
-            # filename += ".densemapnet.weights.{epoch:02d}.h5"
-            filename += ".densemapnet.weights.%d-%d.h5" % (seq, i)
-            filepath = os.path.join(checkdir, filename)
-            checkpoint = ModelCheckpoint(filepath=filepath,
-                                         save_weights_only=True,
-                                         verbose=1,
-                                         save_best_only=False)
-            callbacks = [checkpoint]
-
-            self.load_train_data(i)
-
-            if self.network is None:
-                self.network = DenseMapNet(settings=self.settings)
-                self.model = self.network.build_model(lr=lr)
-
-            if not is_model_compiled:
-                if self.settings.otanh:
-                    sgd = SGD(lr=lr, momentum=0.5, nesterov=True)
-                    print("Using loss=mse on tanh output layer")
-                    self.model.compile(loss='mse', optimizer=sgd)
-                else:
-                    print("Using loss=crossent on sigmoid output layer")
-                    self.model.compile(loss='binary_crossentropy',
-                                       optimizer=RMSprop(lr=lr, decay=1e-6))
-                is_model_compiled = True
-
-            if self.settings.model_weights:
-                if self.settings.notrain:
-                    self.predict_disparity()
-                    return
-
-            x = [self.train_lx, self.train_rx]
-            self.model.fit(x,
-                           self.train_dx,
-                           epochs=epochs,
-                           batch_size=4,
-                           shuffle=True,
-                           callbacks=callbacks)
-
-    def mkdir_images(self):
-        self.images_pdir = "images"
-        pdir = self.images_pdir
-
-        for dirname in ["train", "test"]:
-            cdir = os.path.join(pdir, dirname)
-            filepath = os.path.join(cdir, "left")
-            os.makedirs(filepath, exist_ok=True)
-            filepath = os.path.join(cdir, "right")
-            os.makedirs(filepath, exist_ok=True)
-            filepath = os.path.join(cdir, "disparity")
-            os.makedirs(filepath, exist_ok=True)
-            filepath = os.path.join(cdir, "prediction")
-            os.makedirs(filepath, exist_ok=True)
+        filepath = os.path.join(self.dataset, dirname)
+        os.makedirs(filepath, exist_ok=True)
 
 
     def get_epe(self, use_train_data=True, get_performance=False):

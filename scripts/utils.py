@@ -14,6 +14,13 @@ class DataLoader(object):
     def __init__(self, dataset_path):
         self.dataset_path = dataset_path
         self.images = None
+        self.outputs = None
+
+    def load_outputs (self):
+        self.outputs = genfromtxt(os.path.join(self.dataset_path, '*outputs.txt'), delimiter=',')
+
+    def get_outputs (self):
+        return self.normalize(self.outputs)
 
     def load_images(self):
         image_paths = sorted(glob.glob(os.path.join(self.dataset_path, '*.png')))
@@ -23,9 +30,21 @@ class DataLoader(object):
     def get_training (self):
         training = self.images[:int(np.ceil(self.images.shape[0]*.7)),:,:]
 
-        return training
+        return self.normalize(training)
 
     def get_test (self):
         test = self.images[int(np.ceil(self.images.shape[0]*.7)):,:,:]
 
-        return test
+        return self.normalize(test)
+
+    def get_all (self):
+        test = self.normalize(self.images[:,:,:])
+
+        return self.nomalize(test)
+
+    def nomalize (self, data):
+        # normalize data between 0 and 1
+        data = (data/data.max()).astype('uint8')
+
+        return data
+
