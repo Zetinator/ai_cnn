@@ -44,22 +44,7 @@ class Predictor(object):
         self.outputs_data = loader.get_outputs()
         print('                     --> SUCCESS')
 
-    def train_network(self):
-        if settings.model_weights:
-            self.predict()
-            return
-        else:
-            self.train_all()
-            # epochs = 1
-            # decay = 1e-6
-            # lr = 1e-3 + decay
-            # for i in range(500):
-                # lr = lr - decay
-                # print("Epoch: ", (i+1), " Learning rate: ", lr)
-                # self.train_batch(epochs=epochs, lr=lr, seq=(i+1))
-                # self.predict()
-
-    def train_all(self, epochs=1000, lr=1e-3):
+    def train_network(self, epochs=1000, lr=1e-3):
         checkdir = "checkpoint"
         try:
             os.mkdir(checkdir)
@@ -69,7 +54,7 @@ class Predictor(object):
 
         # callbacks
         filename = self.settings.dataset
-        filename += ".densemapnet.weights.{epoch:02d}.h5"
+        filename += ".cnn.weights.{epoch:02d}.h5"
         filepath = os.path.join(checkdir, filename)
         checkpoint = ModelCheckpoint(filepath=filepath,
                                      save_weights_only=True,
@@ -137,7 +122,7 @@ if __name__ == '__main__':
     settings.predict = args.predict
 
     predictor = Predictor(settings=settings)
-    if settings.predict:
+    if settings.predict and settings.model_weights:
         predictor.predict()
     else:
         predictor.train_network()
