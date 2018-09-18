@@ -5,9 +5,9 @@ import os, glob
 # Utility class
 class Settings(object):
     def __init__(self):
-        self.ydim = 960
-        self.xdim = 540
-        self.channels = 3
+        self.ydim = 160
+        self.xdim = 90
+        self.channels = 1
         self.model_weights = None
 
 class data_loader(object):

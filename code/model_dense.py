@@ -14,7 +14,7 @@ from keras.layers.pooling import MaxPooling2D
 from keras.utils import plot_model
 
 import numpy as np
-# from utils import Settings
+from utils import Settings
 
 
 class CNN(object):
@@ -45,8 +45,7 @@ class CNN(object):
                         strides=4, 
                         kernel_size=4,
                         padding='same',
-                        activation='relu', 
-                        dilation_rate=2)(input)
+                        activation='relu')(input)
         skip = BatchNormalization()(skip)
 
 
@@ -102,7 +101,7 @@ class CNN(object):
                         bias_initializer='zeros')(y)
 
         # CNN model
-        self.model = Model(image_input,output)
+        self.model = Model(input,output)
         if self.settings.model_weights:
             print("Loading checkpoint weights %s...."
                   % self.settings.model_weights)
