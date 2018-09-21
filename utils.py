@@ -21,7 +21,7 @@ class DataLoader(object):
         self.labels = self.labels.reshape(np.append(self.labels.shape,1))
 
     def get_labels (self):
-        return (self.labels/self.labels.max())
+        return (self.labels/self.labels.max())[:,0,:]
 
     def load_images(self):
         image_paths = sorted(glob.glob(os.path.join(self.dataset_path, '*.png')))

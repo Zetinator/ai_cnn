@@ -63,8 +63,9 @@ class Interface(object):
                                      save_weights_only=True,
                                      verbose=1,
                                      save_best_only=False)
-        tb = TensorBoard(log_dir='./graph', histogram_freq=0,
-                            write_graph=True, write_images=True)
+        # tb = TensorBoard(log_dir='./graph', histogram_freq=0,
+                            # write_graph=True, write_images=True)
+        tb = TensorBoard(log_dir='./graph')
         callbacks = [checkpoint, tb]
 
         if self.network is None:
