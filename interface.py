@@ -39,12 +39,12 @@ class Interface(object):
         loader = DataLoader(self.dataset)
         print('Loading data... ')
         loader.load_images()
-        self.image_data = loader.get_all()
+        self.image_data = loader.load_images()
         self.settings.ydim = self.image_data.shape[1]
         self.settings.xdim = self.image_data.shape[2]
         self.settings.channels = self.image_data.shape[3]
         loader.load_labels()
-        self.labels_data = loader.get_labels()
+        self.labels_data = loader.load_labels()
         print('                     --> SUCCESS')
 
     def train_network(self, epochs=500, lr=1e-3):
