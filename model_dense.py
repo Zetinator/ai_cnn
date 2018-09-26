@@ -108,10 +108,10 @@ class CNN(object):
             print("Loading checkpoint weights %s...."
                   % self.settings.model_weights)
             self.model.load_weights(self.settings.model_weights)
-        # self.model.compile(loss='mse',
-                           # optimizer=RMSprop(lr=lr))
-        self.model.compile(loss='binary_crossentropy',
+        self.model.compile(loss='mse',
                            optimizer=RMSprop(lr=lr))
+        # self.model.compile(loss='binary_crossentropy',
+                           # optimizer=RMSprop(lr=lr))
         print("CNN Model:")
         self.model.summary()
         plot_model(self.model, to_file='CNN.png', show_shapes=True)
