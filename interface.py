@@ -79,6 +79,7 @@ class Interface(object):
 
         self.model.fit(self.image_data,
                        self.labels_data,
+                       validation_split=0.33,
                        epochs=epochs,
                        batch_size=50,
                        shuffle=True,
