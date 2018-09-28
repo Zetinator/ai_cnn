@@ -67,7 +67,7 @@ class CNN(object):
         # dense interconnection inspired by DenseNet
         dilation_rate = 1
         x = skip
-        for i in range(5):
+        for i in range(2):
             x = keras.layers.concatenate([x, y])
             y = Conv2D(filters=64,
                         activation='relu',
@@ -79,7 +79,7 @@ class CNN(object):
                         kernel_size=5,
                         padding='same',
                         dilation_rate=dilation_rate)(y)
-            y = BatchNormalization()(x)
+            y = BatchNormalization()(y)
             y = Dropout(dropout)(y)
             dilation_rate += 1
 
