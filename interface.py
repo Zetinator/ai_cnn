@@ -32,7 +32,6 @@ class Interface(object):
         self.model = None
 
         # action time
-        self.mkdir_labels()
         self.load_data()
 
     def load_data(self):
@@ -84,12 +83,6 @@ class Interface(object):
                        batch_size=50,
                        shuffle=True,
                        callbacks=callbacks)
-
-    def mkdir_labels(self):
-        dirname = 'outputs'
-
-        filepath = os.path.join(self.dataset, dirname)
-        os.makedirs(filepath, exist_ok=True)
 
     def predict(self, image):
         if self.model:
