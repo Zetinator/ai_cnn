@@ -18,8 +18,11 @@ class DataLoader(object):
 
     def load_labels (self):
         self.labels = np.genfromtxt(os.path.join(self.dataset_path, 'labels.txt'), delimiter=',')
-        self.labels = self.labels.reshape(np.append(self.labels.shape,1))
-        return (self.labels/180)[:,0,:]
+        # self.labels = self.labels.reshape(np.append(self.labels.shape,1))
+        # self.labels[:,0,:] = self.labels[:,0,:]/180
+        self.labels[:,0] = self.labels[:,0]/180
+
+        return self.labels[:,:5]
 
     def load_images(self):
         self.images = np.load(os.path.join(self.dataset_path, 'compressed_data.npz'))['images']
