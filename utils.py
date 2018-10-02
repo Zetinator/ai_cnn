@@ -22,7 +22,7 @@ class DataLoader(object):
         # self.labels[:,0,:] = self.labels[:,0,:]/180
         self.labels[:,0] = self.labels[:,0]/180
 
-        return self.labels[:,:5]
+        return self.labels[:,:6]
 
     def load_images(self):
         self.images = np.load(os.path.join(self.dataset_path, 'compressed_data.npz'))['images']
