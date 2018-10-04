@@ -64,7 +64,7 @@ class CNN(object):
             dilation_rate += 1
 
 
-        # dense interconnection inspired by DenseNet
+        # dense interconnection
         dilation_rate = 1
         x = skip
         for i in range(2):
@@ -84,7 +84,7 @@ class CNN(object):
             dilation_rate += 1
 
 
-        # input image skip connection to disparity estimate
+        # input image skip connection
         x = keras.layers.concatenate([y, skip])
         y = Conv2D(filters=1,
                         strides=2,
