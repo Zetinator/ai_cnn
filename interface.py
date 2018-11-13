@@ -46,7 +46,7 @@ class Interface(object):
         self.labels_data = loader.load_labels()
         print('                     --> SUCCESS')
 
-    def train_network(self, epochs=500, lr=1e-3):
+    def train_network(self, epochs=1000, lr=1e-3):
         checkdir = "checkpoint"
         try:
             os.mkdir(checkdir)
